@@ -1,12 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useSnackbar } from "notistack";
 
 function Login(props) {
+  const {user,setuser} =props;
+  const navigate = useNavigate();
   const [username, setusername] = useState("");
   const [password, setpassword] = useState("");
+  const [process, setprocess] = useState("login");
+  const [errors, seterrors] = useState([]);
+  const { enqueueSnackbar } = useSnackbar();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    let url = "";
+    if (process == "login") {
+      url = "http://localhost:3001/login";
+    } else {
+      url = "http://localhost:3001/signup";
+    }
+    let res = await axios.post(url, {
+      user: username,
+      pwd: password,
+    });
+    if (res.data.success === 1) {
+      setuser(username)
+      enqueueSnackbar(process + " successfull !", { variant: "success" });
+      navigate("/TodoComponent");
+    } else {
+      seterrors(res.data.errors);
+      res.data.errors.map((error) => enqueueSnackbar(error.msg, { variant: "error" }));
+    }
+  };
+
+  useEffect(() => {
+    console.log("errors :", errors);
+  }, [errors]);
+
   return (
-    <div className="flex items-center justify-center h-[100vh] bg-slate-300 text-white">
+    <div className="flex items-center justify-center h-[100vh]  bg-slate-300 text-white">
+        <form action="">
+
       <div className="flex items-center justify-center flex-col gap-4 drop-shadow-xl bg-orange-300 p-8 pb-6 rounded-2xl mb-[10vh]">
         <div className="text-3xl font-thin tracking-wide mb-2">Login / Signup</div>
+
         <div className="flex items-center justify-between w-[100%]">
           <label className="pr-2 text-xl">Username:</label>
           <input
@@ -14,7 +52,9 @@ function Login(props) {
             onChange={(e) => {
               setusername(e.target.value);
             }}
-            className="rounded-md p-1"
+            className="rounded-md p-1 outline-none text-orange-400"
+            minLength={3}
+            required
           />
         </div>
 
@@ -25,25 +65,61 @@ function Login(props) {
             onChange={(e) => {
               setpassword(e.target.value);
             }}
-            className="rounded-md p-1"
+            className="rounded-md p-1 outline-none text-orange-400"
+            minLength={3}
+            required
           />
         </div>
 
         <div className="flex items-center justify-evenly w-full">
           <div>
-            <input type="radio" name="process" id="login" />
-            <label for="login" className="pl-2 text-xl">Login</label>
+            <input
+              type="radio"
+              name="process"
+              id="login"
+              checked={process === "login"}
+              onChange={() => {
+                setprocess("login");
+              }}
+            />
+            <label for="login" className="pl-2 text-xl">
+              Login
+            </label>
           </div>
           <div>
-            <input type="radio" name="process" id="signup" className="bg-white active:bg-orange-600"/>
-            <label for="signup" className="pl-2 text-xl">Signup</label>
+            <input
+              type="radio"
+              name="process"
+              id="signup"
+              checked={process === "signup"}
+              onChange={() => {
+                setprocess("signup");
+              }}
+            />
+            <label for="signup" className="pl-2 text-xl">
+              Signup
+            </label>
           </div>
         </div>
 
-        <button className="bg-white p-2 rounded-md px-6 text-black font-light tracking-wide text-xl mt-2 focus:cursor-pointer">
+        <button
+          onClick={handleSubmit}
+          className="bg-white p-2 rounded-md px-6 text-black font-light tracking-wide text-xl mt-2 focus:cursor-pointer"
+        >
           Submit
         </button>
+
+        {/* {errors &&
+          errors.map((error) => {
+            console.log(error);
+            return (
+              <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} message={error.msg }   anchorOrigin={{ vertical:'top', horizontal:'center' }}
+              />
+            );
+          })} */}
       </div>
+      </form>
+
     </div>
   );
 }
